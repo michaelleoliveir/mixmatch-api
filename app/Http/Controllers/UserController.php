@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Http;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -46,21 +45,5 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         //
-    }
-
-    public function connectionSpotifyAccount(Request $request)
-    {
-        $clientId = config('services.spotify.client_id');
-        $secretId = config('services.spotify.client_secret');
-
-        $response = Http::asForm()
-            ->withBasicAuth($clientId, $secretId)
-            ->post('https://accounts.spotify.com/api/token', ['grant_type' => 'client_credentials']);
-
-        if($response->successful()) {
-            return $response->json();
-        }
-
-        return $response->json();
     }
 }
