@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Http;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use App\Models\User;
 
 class AuthController extends Controller
 {
@@ -48,31 +51,34 @@ class AuthController extends Controller
         //
     }
 
-    public function connectionSpotifyAccount(Request $request)
+    public function loginWithSpotify()
     {
-        $clientId = config('services.spotify.client_id');
-        $secretId = config('services.spotify.client_secret');
-
-        $response = Http::asForm()
-            ->withBasicAuth($clientId, $secretId)
-            ->post('https://accounts.spotify.com/api/token', ['grant_type' => 'client_credentials']);
-
-        if($response->successful()) {
-            return $response->json();
-        }
-
-        return $response->json();
-    }
-
-    public function loginWithSpotify() 
-    {
-        return Socialite::driver('spotify')->redirect();
+        return Socialite::driver('spotify')
+            ->setScopes(['user-read-email', 'playlist-modify-public', 'playlist-modify-private'])
+            ->redirect();
     }
 
     public function handleSpotifyCallback()
     {
-        $response = Socialite::driver('spotify')->user();
+        try {
+            $spotifyUser = Socialite::driver('spotify')->stateless()->user();
 
-        dd($response);
+            $user = User::updateOrCreate(
+                ['spotify_id' => $spotifyUser->getId()],
+                [
+                    'name' => $spotifyUser->getName(),
+                    'email' => $spotifyUser->getEmail(),
+                    'spotify_token' => $spotifyUser->token,
+                    'spotify_refresh_token' => $spotifyUser->refreshToken,
+                ]
+            );
+
+            Auth::login($user);
+
+            return redirect('/main');
+
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
     }
 }
