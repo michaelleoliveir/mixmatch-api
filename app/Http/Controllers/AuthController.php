@@ -75,7 +75,7 @@ class AuthController extends Controller
 
             Auth::login($user);
 
-            return redirect('/main');
+            return redirect('http://localhost:8080/create-playlist');
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());
