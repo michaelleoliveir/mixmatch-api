@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Http;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
@@ -55,6 +53,8 @@ class AuthController extends Controller
     {
         return Socialite::driver('spotify')
             ->setScopes(['user-read-email', 'playlist-modify-public', 'playlist-modify-private'])
+            ->stateless()
+            ->with(['show_dialog' => 'true'])
             ->redirect();
     }
 
@@ -73,12 +73,14 @@ class AuthController extends Controller
                 ]
             );
 
-            Auth::login($user);
+            $token = $user->createToken('spotify_token')->plainTextToken;
 
-            return redirect('http://localhost:8080/create-playlist');
+            return redirect('http://localhost:8080/create-playlist?token=' . $token);
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());
+
+            return redirect('http://localhost:8080/error');
         }
     }
 }
