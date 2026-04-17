@@ -58,8 +58,12 @@ class AuthController extends Controller
             ->redirect();
     }
 
-    public function handleSpotifyCallback()
+    public function handleSpotifyCallback(Request $request)
     {
+        if(!$request->has('code') || $request->has('denied')) {
+            return redirect()->to(env('FRONTEND_URL'));
+        };
+
         try {
             $spotifyUser = Socialite::driver('spotify')->stateless()->user();
 
@@ -68,6 +72,7 @@ class AuthController extends Controller
                 [
                     'name' => $spotifyUser->getName(),
                     'email' => $spotifyUser->getEmail(),
+                    'icon' => $spotifyUser->avatar,
                     'spotify_token' => $spotifyUser->token,
                     'spotify_refresh_token' => $spotifyUser->refreshToken,
                 ]
@@ -75,12 +80,12 @@ class AuthController extends Controller
 
             $token = $user->createToken('spotify_token')->plainTextToken;
 
-            return redirect('http://localhost:8080/create-playlist?token=' . $token);
+            return redirect()->to(env('FRONTEND_URL') . 'create-playlist?token=' . $token);
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());
 
-            return redirect('http://localhost:8080/error');
+            return redirect()->to(env('FRONTEND_URL') . 'error');
         }
     }
 }

@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'spotify_id', 'spotify_token', 'spotify_refresh_token'])]
+#[Fillable(['name', 'email', 'icon', 'spotify_id', 'spotify_token', 'spotify_refresh_token'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
