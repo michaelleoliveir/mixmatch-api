@@ -17,17 +17,41 @@ class SpotifyController extends Controller
         $this->spotifyService = $spotifyService;
     }
 
-    // public function createPlaylist(Request $request)
-    // {
-    //     $user = $request->user();
+    public function createPlaylist(Request $request)
+    {
+        $user = $request->user();
+        $spotifyToken = $user->spotify_token;
+        $mood = $request->input('mood', 'chill');
 
-    //     $spotifyToken = $user->spotify_token;
+        // obtém o nome da playlist e as músicas que vão ser inseridas
+        $recommendations = $this->geminiService->getMusicRecommendations($mood);
 
-    //     $recommendations = $this->geminiService->getMusicRecommendations($request->mood);
+        // pegando as uris das músicas recomendadas pela IA
+        $trackUris = collect($recommendations)->map(
+            fn($item) =>
+            $this->spotifyService->getSpotifyUri($item['artist'], $item['track'], $spotifyToken)
+        )->filter()->values()->toArray();
 
-    //     $trackUris = collect($recommendations)->map(
-    //         fn($item) =>
-    //         $this->spotifyService->getSpotifyUri($item['artist'], $item['track'], $spotifyToken)
-    //     )->filter()->toArray();
-    // }
+        if (empty($trackUris)) {
+            return response()->json(['error' => "We couldn't find the songs"], 404);
+        }
+        ;
+
+        // criando a playlist
+        $playlistId = $this->spotifyService->createPlaylistFromUri($recommendations[0]['playlist_title'], $spotifyToken);
+
+        if (!$playlistId) {
+            return response()->json(['error' => "Couldn't create the playlist"], 500);
+        }
+        ;
+
+        // adicionando as músicas na playlist
+        $this->spotifyService->addTracksToPlaylist($playlistId, $spotifyToken, $trackUris);
+
+        return response()->json([
+            'message' => 'Playlist successfully created',
+            'playlist_id' => $playlistId,
+            'playlist_name' => $aiData['playlist_name'] ?? "vibe: $mood",
+        ]);
+    }
 }

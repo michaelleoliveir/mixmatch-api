@@ -29,7 +29,7 @@ class SpotifyService
         return $data['tracks']['items'][0]['uri'];
     }
 
-    public function createPlaylistFromUri(String $title, String $token): string
+    public function createPlaylistFromUri(string $title, string $token): string
     {
         // criando a playlist
         $playlist = Http::withToken($token)
@@ -42,5 +42,15 @@ class SpotifyService
         if (!$playlist->successful()) return null;
 
         return $playlist->json()['id'];
+    }
+
+    public function addTracksToPlaylist(string $playlistId, string $token, array $songs)
+    {
+        $response = Http::withToken($token)
+            ->post("https://api.spotify.com/v1/playlists/{$playlistId}/items", [
+                'uris' => $songs            
+            ]);
+        
+        return $response;
     }
 }

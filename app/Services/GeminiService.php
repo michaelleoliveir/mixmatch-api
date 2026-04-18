@@ -11,6 +11,6 @@ class GeminiService
         $response = (new PlaylistCurator)
             ->prompt("The user's current mood is: {$mood}");
 
-        return json_decode($response->text);
+        return json_decode($response->text, true);
     }
 }
