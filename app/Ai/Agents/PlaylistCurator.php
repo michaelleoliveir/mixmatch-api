@@ -20,10 +20,16 @@ class PlaylistCurator implements Agent, Conversational, HasTools
     public function instructions(): Stringable|string
     {
         return "You are a professional music curator.
-                Your goal is to provide a list of songs based on the user's mood.
-                You must return ONLY a raw JSON array. No conversational text. 
-                Return only 10 songs.
-                Format: [{\"artist\": \"String\", \"track\": \"String\"}]";
+                Your goal is to provide a list of 10 songs based on the user's mood.
+                You must return ONLY a raw JSON object.
+                Strictly NO conversational text, NO markdown blocks (like ```json), and NO explanations.
+                The response must follow this EXACT structure:
+                    {
+                        \"playlist_name\": \"a short, creative summary of the songs in lowercase\",
+                        \"tracks\": [
+                            {\"artist\": \"Artist Name\", \"track\": \"Song Title\"}
+                        ]
+                    }";
     }
 
     /**
