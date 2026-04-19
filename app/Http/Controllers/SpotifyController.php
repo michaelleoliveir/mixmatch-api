@@ -17,7 +17,7 @@ class SpotifyController extends Controller
         $this->spotifyService = $spotifyService;
     }
 
-    public function createPlaylist(Request $request)
+    public function getPreview(Request $request)
     {
         $user = $request->user();
         $spotifyToken = $user->spotify_token;
@@ -26,32 +26,54 @@ class SpotifyController extends Controller
         // obtém o nome da playlist e as músicas que vão ser inseridas
         $recommendations = $this->geminiService->getMusicRecommendations($mood);
 
-        // pegando as uris das músicas recomendadas pela IA
-        $trackUris = collect($recommendations)->map(
-            fn($item) =>
-            $this->spotifyService->getSpotifyUri($item['artist'], $item['track'], $spotifyToken)
-        )->filter()->values()->toArray();
+        // obtém as músicas que a IA recomendou
+        $suggestions = $recommendations['tracks'] ?? [];
 
-        if (empty($trackUris)) {
-            return response()->json(['error' => "We couldn't find the songs"], 404);
-        }
-        ;
+        // pegando as informações das músicas sugeridas pela IA
+        $previewTracks = collect($suggestions)->map(function($track) use ($spotifyToken) {
 
-        // criando a playlist
-        $playlistId = $this->spotifyService->createPlaylistFromUri($recommendations[0]['playlist_title'], $spotifyToken);
+            // pegando a URI da música
+            $uri = $this->spotifyService->getSpotifyUri($track['artist'], $track['title'], $spotifyToken);
 
-        if (!$playlistId) {
-            return response()->json(['error' => "Couldn't create the playlist"], 500);
-        }
-        ;
+            if(!$uri) return null;
 
-        // adicionando as músicas na playlist
-        $this->spotifyService->addTracksToPlaylist($playlistId, $spotifyToken, $trackUris);
+            // pegando somente o ID da música
+            $trackId = str_replace('spotify:track:', '', $uri);
+            $trackDetails = $this->spotifyService->showTrackInfo($trackId, $spotifyToken);
+
+            return [
+                'uri' => $uri,
+                'artist' => $trackDetails['artists'][0]['name'],
+                'name' => $trackDetails['name'],
+                'album_image' => $trackDetails['album']['images'][0]['url'] ?? null,
+            ];
+        })->filter()->values()->toArray();
+        
 
         return response()->json([
-            'message' => 'Playlist successfully created',
-            'playlist_id' => $playlistId,
-            'playlist_name' => $aiData['playlist_name'] ?? "vibe: $mood",
+            'playlist_name' => $recommendations['playlist_name'],
+            'tracks' => $previewTracks
+        ]);
+    }
+
+    public function createPlaylist(Request $request)
+    {
+        $user = $request->user();
+        $token = $user->spotify_token;
+        $playlistName = $request->input('playlist_name');
+        $uris = $request->input('uris', []);
+
+        $playlistId = $this->spotifyService->createEmptyPlaylist($playlistName, $token);
+
+        if(!$playlistId) {
+            return response()->json(['error' => 'Failed to create playlist'], 500);
+        };
+
+        $this->spotifyService->addTracksToPlaylist($playlistId, $token, $uris);
+
+        return response()->json([
+            'message' => 'Playlist created successfully',
+            'playlist_id' => $playlistId
         ]);
     }
 }
