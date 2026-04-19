@@ -27,7 +27,7 @@ class PlaylistCurator implements Agent, Conversational, HasTools
                     {
                         \"playlist_name\": \"a short, creative summary of the songs in lowercase\",
                         \"tracks\": [
-                            {\"artist\": \"Artist Name\", \"track\": \"Song Title\"}
+                            {\"artist\": \"Artist Name\", \"title\": \"Song Title\"}
                         ]
                     }";
     }
