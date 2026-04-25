@@ -54,9 +54,9 @@ class SpotifyController extends Controller
 
             return [
                 'uri' => $uri,
-                'artist' => $trackDetails['artists'][0]['name'],
+                'artist' => $trackDetails['artist'],
                 'name' => $trackDetails['name'],
-                'album_image' => $trackDetails['album']['images'][0]['url'] ?? null,
+                'album_image' => $trackDetails['album'],
             ];
         })->filter()->values()->toArray();
 
