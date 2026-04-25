@@ -21,7 +21,7 @@ class AuthController extends Controller
     public function handleSpotifyCallback(Request $request)
     {
         if(!$request->has('code') || $request->has('denied')) {
-            return redirect()->to(env('FRONTEND_URL'));
+            return redirect()->to(config('services.spotify.redirect_front'));
         };
 
         try {
@@ -41,12 +41,12 @@ class AuthController extends Controller
 
             $token = $user->createToken('spotify_token')->plainTextToken;
 
-            return redirect()->to(env('FRONTEND_URL') . 'create-playlist?token=' . $token);
+            return redirect()->to(config('services.spotify.redirect_front') . 'create-playlist?token=' . $token);
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());
 
-            return redirect()->to(env('FRONTEND_URL') . 'error');
+            return redirect()->to(config('services.spotify.redirect_front') . 'error');
         }
     }
 }

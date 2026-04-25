@@ -12,7 +12,7 @@ class SpotifyService
         $response = Http::asForm()->post('https://accounts.spotify.com/api/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $user->spotify_refresh_token,
-            'client_id' => env('SPOTIFY_CLIENT_ID')
+            'client_id' => config('services.spotify.client_id')
         ]);
 
         if ($response->successful()) {
