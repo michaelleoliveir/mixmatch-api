@@ -29,13 +29,24 @@ class SpotifyController extends Controller
         // obtém as músicas que a IA recomendou
         $suggestions = $recommendations['tracks'] ?? [];
 
+        // verificando se o token do usuário ainda continua válido
+        // se não, ele é atualizado
+        if (now()->addMinutes(3)->greaterThanOrEqualTo($user->spotify_token_expires_at)) {
+            $newSpotifyToken = $this->spotifyService->refreshAccessToken($user);
+
+            if ($newSpotifyToken) {
+                $spotifyToken = $newSpotifyToken;
+            };
+        };
+
         // pegando as informações das músicas sugeridas pela IA
-        $previewTracks = collect($suggestions)->map(function($track) use ($spotifyToken) {
+        $previewTracks = collect($suggestions)->map(function ($track) use ($spotifyToken) {
 
             // pegando a URI da música
             $uri = $this->spotifyService->getSpotifyUri($track['artist'], $track['title'], $spotifyToken);
 
-            if(!$uri) return null;
+            if (!$uri)
+                return null;
 
             // pegando somente o ID da música
             $trackId = str_replace('spotify:track:', '', $uri);
@@ -48,7 +59,7 @@ class SpotifyController extends Controller
                 'album_image' => $trackDetails['album']['images'][0]['url'] ?? null,
             ];
         })->filter()->values()->toArray();
-        
+
 
         return response()->json([
             'playlist_name' => $recommendations['playlist_name'],
@@ -65,9 +76,10 @@ class SpotifyController extends Controller
 
         $playlistId = $this->spotifyService->createEmptyPlaylist($playlistName, $token);
 
-        if(!$playlistId) {
+        if (!$playlistId) {
             return response()->json(['error' => 'Failed to create playlist'], 500);
-        };
+        }
+        ;
 
         $this->spotifyService->addTracksToPlaylist($playlistId, $token, $uris);
 

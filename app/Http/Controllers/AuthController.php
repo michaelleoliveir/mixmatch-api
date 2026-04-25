@@ -35,6 +35,7 @@ class AuthController extends Controller
                     'icon' => $spotifyUser->avatar,
                     'spotify_token' => $spotifyUser->token,
                     'spotify_refresh_token' => $spotifyUser->refreshToken,
+                    'spotify_token_expires_at' => now()->addSeconds($spotifyUser->expiresIn ?? 3600)
                 ]
             );
 
