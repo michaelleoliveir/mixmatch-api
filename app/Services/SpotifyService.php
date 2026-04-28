@@ -64,7 +64,7 @@ class SpotifyService
         return $uri;
     }
 
-    public function createEmptyPlaylist(string $title, string $token): ?string
+    public function createEmptyPlaylist(string $title, string $token): ?array
     {
         // criando a playlist
         $playlist = Http::withToken($token)
@@ -77,7 +77,12 @@ class SpotifyService
         if (!$playlist->successful())
             return null;
 
-        return $playlist->json()['id'];
+        $data = $playlist->json();
+
+        return [
+            'id' => $data['id'],
+            'external_url' => $data['external_urls']['spotify'],
+        ];
     }
 
     public function showTrackInfo(string $trackUri, string $token): array
