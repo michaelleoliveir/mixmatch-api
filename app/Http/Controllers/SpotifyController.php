@@ -81,11 +81,11 @@ class SpotifyController extends Controller
         }
         ;
 
-        $this->spotifyService->addTracksToPlaylist($playlistId, $token, $uris);
+        $this->spotifyService->addTracksToPlaylist($playlistId['id'], $token, $uris);
 
         return response()->json([
             'message' => 'Playlist created successfully',
-            'playlist_id' => $playlistId
+            'playlist_url' => $playlistId['external_url'],
         ]);
     }
 }
