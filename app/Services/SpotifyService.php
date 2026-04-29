@@ -116,4 +116,61 @@ class SpotifyService
 
         return $response;
     }
+
+    public function getUserData(string $token): ?array
+    {
+        $response = Http::withToken($token)
+            ->get("https://api.spotify.com/v1/me");
+
+        if (!$response->successful())
+            return null;
+
+        $data = $response->json();
+
+        return [
+            'display_name' => $data['display_name'],
+            'email' => $data['email'] ?? null,
+            'followers' => $data['followers']['total'] ?? 0,
+            'icon' => !empty($data['images']) ? $data['images'][0]['url'] : null
+        ];
+    }
+
+    public function getTopArtists(string $token): ?array
+    {
+        $response = Http::withToken($token)
+            ->get("https://api.spotify.com/v1/me/top/artists?limit=10");
+
+        if (!$response->successful())
+            return null;
+
+        $data = $response->json();
+
+        return [
+            'artists' => collect($data['items'])->map(fn($artist) => [
+                'name' => $artist['name'],
+                'id' => $artist['id'],
+                'image' => $artist['images'][0]['url'] ?? null,
+            ])->all()
+        ];
+    }
+
+    public function getTopTracks(string $token)
+    {
+        $response = Http::withToken($token)
+            ->get("https://api.spotify.com/v1/me/top/tracks?limit=10");
+
+        if(!$response->successful()) return null;
+
+        $data = $response->json();
+
+        return [
+            'tracks' => collect($data['items'])->map(fn($track) => [
+                'name' => $track['name'],
+                'artist' => $track['artists'][0]['name'],
+                'album_name' => $track['album']['name'],
+                'album_cover' => $track['album']['images'][0]['url'] ?? null,
+                'explicit' => $track['explicit']
+            ])->all()
+        ];
+    }
 }
