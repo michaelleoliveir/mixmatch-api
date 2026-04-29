@@ -31,6 +31,17 @@ class SpotifyService
         return null;
     }
 
+    public function getRefreshToken($user)
+    {
+        if (now()->addMinutes(3)->greaterThanOrEqualTo($user->spotify_token_expires_at)) {
+            $newSpotifyToken = $this->refreshAccessToken($user);
+
+            return $newSpotifyToken ?? $user->spotify_token;
+        };
+
+        return $user->spotify_token;
+    }
+
     public function getSpotifyUri(string $artist, string $track, string $token): string
     {
         $query = "track:{$track} artist:{$artist}";
@@ -159,7 +170,8 @@ class SpotifyService
         $response = Http::withToken($token)
             ->get("https://api.spotify.com/v1/me/top/tracks?limit=10");
 
-        if(!$response->successful()) return null;
+        if (!$response->successful())
+            return null;
 
         $data = $response->json();
 
