@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function loginWithSpotify()
     {
         return Socialite::driver('spotify')
-            ->setScopes(['user-read-email', 'playlist-modify-public', 'playlist-modify-private'])
+            ->setScopes(['user-read-email', 'playlist-modify-public', 'playlist-modify-private', 'user-top-read'])
             ->stateless()
             ->with(['show_dialog' => 'true'])
             ->redirect();

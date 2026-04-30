@@ -13,4 +13,16 @@ class DashboardController extends Controller
     {
         $this->spotifyService = $spotifyService;
     }
+
+    public function getUserStats(Request $request)
+    {
+        $user = $request->user();
+        $spotifyToken = $this->spotifyService->getRefreshToken($user);
+
+        return response()->json([
+            'profile' => $this->spotifyService->getUserData($spotifyToken),
+            'tracks' => $this->spotifyService->getTopTracks($spotifyToken),
+            'artists' => $this->spotifyService->getTopArtists($spotifyToken)
+        ]);
+    }
 }
