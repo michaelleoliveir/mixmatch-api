@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -37,7 +38,8 @@ class SpotifyService
             $newSpotifyToken = $this->refreshAccessToken($user);
 
             return $newSpotifyToken ?? $user->spotify_token;
-        };
+        }
+        ;
 
         return $user->spotify_token;
     }
@@ -133,8 +135,9 @@ class SpotifyService
         $response = Http::withToken($token)
             ->get("https://api.spotify.com/v1/me");
 
-        if (!$response->successful())
-            return null;
+        if ($response->failed()) {
+            throw new Exception('Error fetching user data: ' . $response->body());
+        }
 
         $data = $response->json();
 
@@ -151,8 +154,9 @@ class SpotifyService
         $response = Http::withToken($token)
             ->get("https://api.spotify.com/v1/me/top/artists?limit=10");
 
-        if (!$response->successful())
-            return null;
+        if ($response->failed()) {
+            throw new Exception('Error fetching top artists: ' . $response->body());
+        }
 
         $data = $response->json();
 
@@ -165,13 +169,14 @@ class SpotifyService
         ];
     }
 
-    public function getTopTracks(string $token)
+    public function getTopTracks(string $token): ?array
     {
         $response = Http::withToken($token)
             ->get("https://api.spotify.com/v1/me/top/tracks?limit=10");
 
-        if (!$response->successful())
-            return null;
+        if ($response->failed()) {
+            throw new Exception('Error fetching top tracks: ' . $response->body());
+        }
 
         $data = $response->json();
 
