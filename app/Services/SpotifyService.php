@@ -149,10 +149,13 @@ class SpotifyService
         ];
     }
 
-    public function getTopArtists(string $token): ?array
+    public function getTopArtists(string $token, string $time_range): ?array
     {
         $response = Http::withToken($token)
-            ->get("https://api.spotify.com/v1/me/top/artists?limit=10");
+            ->get("https://api.spotify.com/v1/me/top/artists", [
+                'time_range' => $time_range,
+                'limit' => 10
+            ]);
 
         if ($response->failed()) {
             throw new Exception('Error fetching top artists: ' . $response->body());
@@ -169,10 +172,13 @@ class SpotifyService
         ];
     }
 
-    public function getTopTracks(string $token): ?array
+    public function getTopTracks(string $token, string $time_range): ?array
     {
         $response = Http::withToken($token)
-            ->get("https://api.spotify.com/v1/me/top/tracks?limit=10");
+            ->get("https://api.spotify.com/v1/me/top/tracks", [
+                'time_range' => $time_range,
+                'limit' => 10
+            ]);
 
         if ($response->failed()) {
             throw new Exception('Error fetching top tracks: ' . $response->body());

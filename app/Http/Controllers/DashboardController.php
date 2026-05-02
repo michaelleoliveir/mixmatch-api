@@ -18,11 +18,12 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         $spotifyToken = $this->spotifyService->getRefreshToken($user);
+        $time_range = $request->input('time_range');
 
         return response()->json([
             'profile' => $this->spotifyService->getUserData($spotifyToken),
-            'tracks' => $this->spotifyService->getTopTracks($spotifyToken),
-            'artists' => $this->spotifyService->getTopArtists($spotifyToken)
+            'tracks' => $this->spotifyService->getTopTracks($spotifyToken, $time_range),
+            'artists' => $this->spotifyService->getTopArtists($spotifyToken, $time_range)
         ]);
     }
 }
