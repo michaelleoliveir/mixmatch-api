@@ -19,8 +19,7 @@ class SpotifyController extends Controller
 
     public function getPreview(Request $request)
     {
-        $user = $request->user();
-        $spotifyToken = $this->spotifyService->getRefreshToken($user);
+        $spotifyToken = $this->spotifyService->getRefreshToken($request->user());
         $mood = $request->input('mood', 'chill');
 
         // obtém o nome da playlist e as músicas que vão ser inseridas
@@ -59,8 +58,7 @@ class SpotifyController extends Controller
 
     public function createPlaylist(Request $request)
     {
-        $user = $request->user();
-        $token = $user->spotify_token;
+        $token = $request->user()->spotify_token;
         $playlistName = $request->input('playlist_name');
         $uris = $request->input('uris', []);
 
