@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\SpotifyService;
-use Illuminate\Support\Facades\Cache;
+use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -17,7 +17,7 @@ class SyncSpotifyDashboard extends Command
      */
     public function handle(SpotifyService $spotifyService)
     {
-        $users = \App\Models\User::whereNotNull('spotify_refresh_token')->get();
+        $users = User::whereNotNull('spotify_refresh_token')->get();
         $ranges = ['short_term', 'medium_term', 'long_term'];
 
         foreach ($users as $user) {
@@ -25,11 +25,8 @@ class SyncSpotifyDashboard extends Command
 
             try {
                 foreach ($ranges as $range) {
-                    $data = $spotifyService->completeDashboardData($user, $range);
+                    $spotifyService->completeDashboardData($user, $range);
 
-                    $cacheKey = "user_dashboard_{$user->id}_{$range}";
-
-                    Cache::put($cacheKey, $data, now()->addDays(1));
                     $this->info("Dados {$range} sincronizados com sucesso");
                 }
             } catch (\Exception $e) {
