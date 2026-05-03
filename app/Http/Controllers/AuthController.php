@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function loginWithSpotify()
     {
         return Socialite::driver('spotify')
-            ->setScopes(['user-read-email', 'playlist-modify-public', 'playlist-modify-private'])
+            ->setScopes(['user-read-email', 'playlist-modify-public', 'playlist-modify-private', 'user-top-read'])
             ->stateless()
             ->with(['show_dialog' => 'true'])
             ->redirect();
@@ -41,7 +41,7 @@ class AuthController extends Controller
 
             $token = $user->createToken('spotify_token')->plainTextToken;
 
-            return redirect()->to(config('services.spotify.redirect_front') . 'create-playlist?token=' . $token);
+            return redirect()->to(config('services.spotify.redirect_front') . 'dashboard?token=' . $token);
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());

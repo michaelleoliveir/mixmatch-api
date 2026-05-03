@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SpotifyService
 {
@@ -29,6 +31,18 @@ class SpotifyService
         ;
 
         return null;
+    }
+
+    public function getRefreshToken($user)
+    {
+        if (now()->addMinutes(10)->greaterThanOrEqualTo($user->spotify_token_expires_at)) {
+            $newSpotifyToken = $this->refreshAccessToken($user);
+
+            return $newSpotifyToken ?? $user->spotify_token;
+        }
+        ;
+
+        return $user->spotify_token;
     }
 
     public function getSpotifyUri(string $artist, string $track, string $token): string
@@ -115,5 +129,90 @@ class SpotifyService
             ]);
 
         return $response;
+    }
+
+    public function getUserData(string $token): ?array
+    {
+        $response = Http::withToken($token)
+            ->get("https://api.spotify.com/v1/me");
+
+        if ($response->failed()) {
+            Log::error($response->body());
+            throw new Exception('Error fetching user data. Try again later');
+        }
+
+        $data = $response->json();
+
+        return [
+            'display_name' => $data['display_name'],
+            'email' => $data['email'] ?? null,
+            'followers' => $data['followers']['total'] ?? 0,
+            'icon' => !empty($data['images']) ? $data['images'][0]['url'] : null
+        ];
+    }
+
+    public function getTopArtists(string $token, string $time_range): ?array
+    {
+        $response = Http::withToken($token)
+            ->get("https://api.spotify.com/v1/me/top/artists", [
+                'time_range' => $time_range,
+                'limit' => 10
+            ]);
+
+        if ($response->failed()) {
+            Log::error($response->body());
+            throw new Exception('Error fetching top artists: ');
+        }
+
+        $data = $response->json();
+
+        return [
+            'artists' => collect($data['items'])->map(fn($artist) => [
+                'name' => $artist['name'],
+                'id' => $artist['id'],
+                'image' => $artist['images'][0]['url'] ?? null,
+            ])->all()
+        ];
+    }
+
+    public function getTopTracks(string $token, string $time_range): ?array
+    {
+        $response = Http::withToken($token)
+            ->get("https://api.spotify.com/v1/me/top/tracks", [
+                'time_range' => $time_range,
+                'limit' => 10
+            ]);
+
+        if ($response->failed()) {
+            Log::error($response->body());
+            throw new Exception('Error fetching top tracks: ');
+        }
+
+        $data = $response->json();
+
+        return [
+            'tracks' => collect($data['items'])->map(fn($track) => [
+                'name' => $track['name'],
+                'artist' => $track['artists'][0]['name'],
+                'album_name' => $track['album']['name'],
+                'album_cover' => $track['album']['images'][0]['url'] ?? null,
+                'explicit' => $track['explicit']
+            ])->all()
+        ];
+    }
+
+    public function completeDashboardData($user, string $time_range): ?array
+    {
+        $cacheKey = "user_dashboard_{$user->id}_{$time_range}";
+
+        return Cache::remember($cacheKey, now()->addDays(1), function () use ($user, $time_range) {
+            $token = $this->getRefreshToken($user);
+
+            return [
+                'profile' => $this->getUserData($token),
+                'tracks' => $this->getTopTracks($token, $time_range),
+                'artists' => $this->getTopArtists($token, $time_range)
+            ];
+        });
     }
 }

@@ -19,8 +19,7 @@ class SpotifyController extends Controller
 
     public function getPreview(Request $request)
     {
-        $user = $request->user();
-        $spotifyToken = $user->spotify_token;
+        $spotifyToken = $this->spotifyService->getRefreshToken($request->user());
         $mood = $request->input('mood', 'chill');
 
         // obtém o nome da playlist e as músicas que vão ser inseridas
@@ -28,16 +27,6 @@ class SpotifyController extends Controller
 
         // obtém as músicas que a IA recomendou
         $suggestions = $recommendations['tracks'] ?? [];
-
-        // verificando se o token do usuário ainda continua válido
-        // se não, ele é atualizado
-        if (now()->addMinutes(3)->greaterThanOrEqualTo($user->spotify_token_expires_at)) {
-            $newSpotifyToken = $this->spotifyService->refreshAccessToken($user);
-
-            if ($newSpotifyToken) {
-                $spotifyToken = $newSpotifyToken;
-            };
-        };
 
         // pegando as informações das músicas sugeridas pela IA
         $previewTracks = collect($suggestions)->map(function ($track) use ($spotifyToken) {
@@ -69,8 +58,7 @@ class SpotifyController extends Controller
 
     public function createPlaylist(Request $request)
     {
-        $user = $request->user();
-        $token = $user->spotify_token;
+        $token = $request->user()->spotify_token;
         $playlistName = $request->input('playlist_name');
         $uris = $request->input('uris', []);
 
