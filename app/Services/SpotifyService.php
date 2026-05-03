@@ -34,12 +34,11 @@ class SpotifyService
 
     public function getRefreshToken($user)
     {
-        if (now()->addMinutes(3)->greaterThanOrEqualTo($user->spotify_token_expires_at)) {
+        if (now()->addMinutes(10)->greaterThanOrEqualTo($user->spotify_token_expires_at)) {
             $newSpotifyToken = $this->refreshAccessToken($user);
 
             return $newSpotifyToken ?? $user->spotify_token;
-        }
-        ;
+        };
 
         return $user->spotify_token;
     }
@@ -201,7 +200,7 @@ class SpotifyService
     {
         $cacheKey = "user_dashboard_{$user->id}_{$time_range}";
 
-        Cache::remember($cacheKey, now()->addDays(1), function () use ($user, $time_range) {
+        return Cache::remember($cacheKey, now()->addDays(1), function () use ($user, $time_range) {
             $token = $this->getRefreshToken($user);
 
             return [
