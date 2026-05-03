@@ -196,4 +196,19 @@ class SpotifyService
             ])->all()
         ];
     }
+
+    public function completeDashboardData($user, string $time_range): ?array
+    {
+        $cacheKey = "user_dashboard_{$user->id}_{$time_range}";
+
+        Cache::remember($cacheKey, now()->addDays(1), function () use ($user, $time_range) {
+            $token = $this->getRefreshToken($user);
+
+            return [
+                'profile' => $this->getUserData($token),
+                'tracks' => $this->getTopTracks($token, $time_range),
+                'artists' => $this->getTopArtists($token, $time_range)
+            ];
+        });
+    }
 }

@@ -16,14 +16,9 @@ class DashboardController extends Controller
 
     public function getUserStats(Request $request)
     {
-        $user = $request->user();
-        $spotifyToken = $this->spotifyService->getRefreshToken($user);
         $time_range = $request->input('time_range');
+        $dashboardData = $this->spotifyService->completeDashboardData($request->user(), $time_range);
 
-        return response()->json([
-            'profile' => $this->spotifyService->getUserData($spotifyToken),
-            'tracks' => $this->spotifyService->getTopTracks($spotifyToken, $time_range),
-            'artists' => $this->spotifyService->getTopArtists($spotifyToken, $time_range)
-        ]);
+        return response()->json($dashboardData);
     }
 }
