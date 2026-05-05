@@ -31,4 +31,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function matchProfile()
+    {
+        return $this->hasMany(MatchProfile::class, 'user_id');
+    }
+
+    public function matchReceived()
+    {
+        return $this->hasMany(MatchProfile::class, 'matched_user_id');
+    }
 }
