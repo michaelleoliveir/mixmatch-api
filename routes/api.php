@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MatchController;
 use App\Http\Controllers\SpotifyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,4 +31,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/playlist/create', [SpotifyController::class, 'createPlaylist']);
 
     Route::get('/dashboard', [DashboardController::class, 'getUserStats']);
+
+    Route::get('/match', [MatchController::class, 'index']);
 });
