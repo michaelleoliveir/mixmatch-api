@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SpotifyService
 {
@@ -166,6 +168,20 @@ class SpotifyService
 
         $data = $response->json();
 
+        $user = Auth::user();
+
+        DB::transaction(function () use ($user, $data) {
+            $user->musicData()->where('type', 'artist')->delete();
+
+            $payload = collect($data['items'])->map(fn($artist, $index) => [
+                'type' => 'artist',
+                'spotify_id' => $artist['id'],
+                'ranking' => $index + 1
+            ])->toArray();
+
+            $user->musicData()->createMany($payload);
+        });
+
         return [
             'artists' => collect($data['items'])->map(fn($artist) => [
                 'name' => $artist['name'],
@@ -189,6 +205,20 @@ class SpotifyService
         }
 
         $data = $response->json();
+
+        $user = Auth::user();
+        
+        DB::transaction(function () use ($user, $data) {
+            $user->musicData()->where('type', 'track')->delete();
+
+            $payload = collect($data['items'])->map(fn($track, $index) => [
+                'type' => 'track',
+                'spotify_id' => $track['id'],
+                'ranking' => $index + 1
+            ])->toArray();
+
+            $user->musicData()->createMany($payload);
+        });
 
         return [
             'tracks' => collect($data['items'])->map(fn($track) => [

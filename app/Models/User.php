@@ -32,13 +32,18 @@ class User extends Authenticatable
         ];
     }
 
-    public function matchProfile()
+    public function myLinkMatches()
     {
         return $this->hasMany(MatchProfile::class, 'user_id');
     }
 
-    public function matchReceived()
+    public function matchesWithOthers()
     {
         return $this->hasMany(MatchProfile::class, 'matched_user_id');
+    }
+
+    public function musicData()
+    {
+        return $this->hasMany(MusicData::class, 'user_id');
     }
 }
