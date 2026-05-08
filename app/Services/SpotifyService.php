@@ -170,17 +170,19 @@ class SpotifyService
 
         $user = Auth::user();
 
-        DB::transaction(function () use ($user, $data) {
-            $user->musicData()->where('type', 'artist')->delete();
+        if ($time_range === 'medium_term') {
+            DB::transaction(function () use ($user, $data) {
+                $user->musicData()->where('type', 'artist')->delete();
 
-            $payload = collect($data['items'])->map(fn($artist, $index) => [
-                'type' => 'artist',
-                'spotify_id' => $artist['id'],
-                'ranking' => $index + 1
-            ])->toArray();
+                $payload = collect($data['items'])->map(fn($artist, $index) => [
+                    'type' => 'artist',
+                    'spotify_id' => $artist['id'],
+                    'ranking' => $index + 1
+                ])->toArray();
 
-            $user->musicData()->createMany($payload);
-        });
+                $user->musicData()->createMany($payload);
+            });
+        }
 
         return [
             'artists' => collect($data['items'])->map(fn($artist) => [
@@ -207,18 +209,20 @@ class SpotifyService
         $data = $response->json();
 
         $user = Auth::user();
-        
-        DB::transaction(function () use ($user, $data) {
-            $user->musicData()->where('type', 'track')->delete();
 
-            $payload = collect($data['items'])->map(fn($track, $index) => [
-                'type' => 'track',
-                'spotify_id' => $track['id'],
-                'ranking' => $index + 1
-            ])->toArray();
+        if ($time_range === 'medium_term') {
+            DB::transaction(function () use ($user, $data) {
+                $user->musicData()->where('type', 'track')->delete();
 
-            $user->musicData()->createMany($payload);
-        });
+                $payload = collect($data['items'])->map(fn($track, $index) => [
+                    'type' => 'track',
+                    'spotify_id' => $track['id'],
+                    'ranking' => $index + 1
+                ])->toArray();
+
+                $user->musicData()->createMany($payload);
+            });
+        }
 
         return [
             'tracks' => collect($data['items'])->map(fn($track) => [
