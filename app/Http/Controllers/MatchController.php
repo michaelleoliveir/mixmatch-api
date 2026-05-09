@@ -24,7 +24,8 @@ class MatchController extends Controller
             $user->update([
                 'match_code' => Str::random(10)
             ]);
-        };
+        }
+        ;
 
         $sharedLink = url(config('services.spotify.redirect_front') . "match/{$user->match_code}");
 
@@ -56,17 +57,37 @@ class MatchController extends Controller
             $this->spotifyService->getTopTracks($visitor->spotify_token, 'medium_term');
 
             $visitorTopData = $visitor->musicData()->get();
-        };
+        }
 
         // 4. obtendo o ID das músicas/artistas
         $ownerTopTracks = $ownerTopData->where('type', 'track')->pluck('spotify_id')->toArray();
         $ownerTopArtists = $ownerTopData->where('type', 'artist')->pluck('spotify_id')->toArray();
 
-        $visitorTopTracks = $ownerTopData->where('type', 'track')->pluck('spotify_id')->toArray();
-        $visitorTopArtists = $ownerTopData->where('type', 'artist')->pluck('spotify_id')->toArray();
+        $visitorTopTracks = $visitorTopData->where('type', 'track')->pluck('spotify_id')->toArray();
+        $visitorTopArtists = $visitorTopData->where('type', 'artist')->pluck('spotify_id')->toArray();
 
         $matchingArtists = array_intersect($ownerTopArtists, $visitorTopArtists);
         $matchingTracks = array_intersect($ownerTopTracks, $visitorTopTracks);
+
+        $matchingArtistsDetails = $ownerTopData->whereIn('spotify_id', $matchingArtists)
+            ->where('type', 'artist')
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'photo' => $item->photo
+                ];
+            })->values();
+
+        $matchingTracksDetails = $ownerTopData->whereIn('spotify_id', $matchingTracks)
+            ->where('type', 'track')
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'photo' => $item->photo,
+                    'artist_name' =>$item->artist_name,
+                    'album' => $item->album
+                ];
+            })->values();
 
         $totalPossible = count($ownerTopArtists) + count($ownerTopTracks);
         $totalCommon = count($matchingArtists) + count($matchingTracks);
@@ -76,7 +97,9 @@ class MatchController extends Controller
         return response()->json([
             'match_percent' => round($score, 2),
             'owner_name' => $owner->name,
-            'visitor_name' => $visitor->name
+            'visitor_name' => $visitor->name,   
+            'tracks_match' => $matchingTracksDetails,
+            'artists_match' => $matchingArtistsDetails
         ]);
     }
 }

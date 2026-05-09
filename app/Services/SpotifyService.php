@@ -177,7 +177,11 @@ class SpotifyService
                 $payload = collect($data['items'])->map(fn($artist, $index) => [
                     'type' => 'artist',
                     'spotify_id' => $artist['id'],
-                    'ranking' => $index + 1
+                    'ranking' => $index + 1,
+                    'name' => $artist['name'],
+                    'artist_name' => null,
+                    'album' => null,
+                    'photo' => $artist['images'][0]['url'] ?? null
                 ])->toArray();
 
                 $user->musicData()->createMany($payload);
@@ -217,7 +221,11 @@ class SpotifyService
                 $payload = collect($data['items'])->map(fn($track, $index) => [
                     'type' => 'track',
                     'spotify_id' => $track['id'],
-                    'ranking' => $index + 1
+                    'ranking' => $index + 1,
+                    'name' => $track['name'],
+                    'artist_name' => $track['artists'][0]['name'],
+                    'album' => $track['album']['name'],
+                    'photo' => $track['album']['images'][0]['url'] ?? null
                 ])->toArray();
 
                 $user->musicData()->createMany($payload);
