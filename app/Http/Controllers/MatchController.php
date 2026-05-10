@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\MatchService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Models\User;
@@ -10,10 +11,12 @@ use App\Services\SpotifyService;
 class MatchController extends Controller
 {
     protected $spotifyService;
+    protected $matchService;
 
-    public function __construct(SpotifyService $spotifyService)
+    public function __construct(SpotifyService $spotifyService, MatchService $matchService)
     {
         $this->spotifyService = $spotifyService;
+        $this->matchService = $matchService;
     }
 
     public function index()
@@ -37,69 +40,17 @@ class MatchController extends Controller
 
     public function matchStats($match_code)
     {
-        // 1. verificar se o usuário logado é o mesmo que compartilhou o link
         $owner = User::where('match_code', $match_code)->firstOrFail();
         $visitor = Auth::user();
 
-        // 2. se for, lançar mensagem de erro
         if ($owner->id === $visitor->id) {
             return response()->json([
                 'message' => 'You cannot compare profiles with yourself.'
             ], 400);
         }
 
-        // 3. pegar os Tops do dono e visitante
-        $ownerTopData = $owner->musicData()->get();
-        $visitorTopData = $visitor->musicData()->get();
+        $result = $this->matchService->calculateMatch($owner, $visitor);
 
-        if (empty($visitorTopData)) {
-            $this->spotifyService->getTopArtists($visitor->spotify_token, 'medium_term');
-            $this->spotifyService->getTopTracks($visitor->spotify_token, 'medium_term');
-
-            $visitorTopData = $visitor->musicData()->get();
-        }
-
-        // 4. obtendo o ID das músicas/artistas
-        $ownerTopTracks = $ownerTopData->where('type', 'track')->pluck('spotify_id')->toArray();
-        $ownerTopArtists = $ownerTopData->where('type', 'artist')->pluck('spotify_id')->toArray();
-
-        $visitorTopTracks = $visitorTopData->where('type', 'track')->pluck('spotify_id')->toArray();
-        $visitorTopArtists = $visitorTopData->where('type', 'artist')->pluck('spotify_id')->toArray();
-
-        $matchingArtists = array_intersect($ownerTopArtists, $visitorTopArtists);
-        $matchingTracks = array_intersect($ownerTopTracks, $visitorTopTracks);
-
-        $matchingArtistsDetails = $ownerTopData->whereIn('spotify_id', $matchingArtists)
-            ->where('type', 'artist')
-            ->map(function ($item) {
-                return [
-                    'name' => $item->name,
-                    'photo' => $item->photo
-                ];
-            })->values();
-
-        $matchingTracksDetails = $ownerTopData->whereIn('spotify_id', $matchingTracks)
-            ->where('type', 'track')
-            ->map(function ($item) {
-                return [
-                    'name' => $item->name,
-                    'photo' => $item->photo,
-                    'artist_name' =>$item->artist_name,
-                    'album' => $item->album
-                ];
-            })->values();
-
-        $totalPossible = count($ownerTopArtists) + count($ownerTopTracks);
-        $totalCommon = count($matchingArtists) + count($matchingTracks);
-
-        $score = $totalPossible > 0 ? ($totalCommon / $totalPossible) * 100 : 0;
-
-        return response()->json([
-            'match_percent' => round($score, 2),
-            'owner_name' => $owner->name,
-            'visitor_name' => $visitor->name,   
-            'tracks_match' => $matchingTracksDetails,
-            'artists_match' => $matchingArtistsDetails
-        ]);
+        return response()->json($result);
     }
 }
