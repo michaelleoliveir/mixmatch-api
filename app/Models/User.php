@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'icon', 'spotify_id', 'spotify_token', 'spotify_refresh_token', 'spotify_token_expires_at'])]
+#[Fillable(['name', 'email', 'icon', 'spotify_id', 'spotify_token', 'spotify_refresh_token', 'spotify_token_expires_at', 'match_code'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -30,5 +30,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function myLinkMatches()
+    {
+        return $this->hasMany(MatchProfile::class, 'user_id');
+    }
+
+    public function matchesWithOthers()
+    {
+        return $this->hasMany(MatchProfile::class, 'matched_user_id');
+    }
+
+    public function musicData()
+    {
+        return $this->hasMany(MusicData::class, 'user_id');
     }
 }
