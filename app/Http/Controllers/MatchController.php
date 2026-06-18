@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MatchProfile;
 use App\Services\MatchService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -51,6 +52,37 @@ class MatchController extends Controller
 
         $result = $this->matchService->calculateMatch($owner, $visitor);
 
+        MatchProfile::updateOrCreate([
+            'user_id' => $owner->id,
+            'matched_user_id' => $visitor->id,
+            'score' => $result['match_percent']
+        ]);
+
         return response()->json($result);
+    }
+
+    public function ranking()
+    {
+        $user = Auth::user();
+
+        $matches = MatchProfile::where('user_id', $user->id)
+            ->orWhere('matched_user_id', $user->id)
+            ->orderBy('score', 'desc')
+            ->with(['user', 'matchedUser'])
+            ->get()
+            ->map(function ($match) use ($user) {
+                $other = $match->user_id === $user->id
+                    ? $match->matchedUser
+                    : $match->user;
+                return [
+                    'user' => ['name' => $other->name, 'icon' => $other->icon],
+                    'score' => $match->score,
+                    'registered_at' => $match->created_at
+                ];
+            });
+
+        return response()->json([
+            'ranking' => $matches
+        ]);
     }
 }
