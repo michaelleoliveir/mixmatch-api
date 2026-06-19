@@ -107,7 +107,7 @@ class SpotifyService
 
         return Cache::remember($cacheKey, now()->addDays(6), function () use ($trackUri, $token) {
             $response = Http::withToken($token)
-                ->get("https://api.spotify.com/v1/tracks//{$trackUri}");
+                ->get("https://api.spotify.com/v1/tracks/{$trackUri}");
 
             if (!$response->successful())
                 return [];
