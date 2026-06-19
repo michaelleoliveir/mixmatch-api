@@ -34,5 +34,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/match', [MatchController::class, 'index']);
     Route::get('/match/ranking', [MatchController::class, 'ranking']);
+    Route::get('/match/ranking/{ranking_id}', [MatchController::class, 'rankingDetails']);
     Route::get('/match/{match_code}', [MatchController::class, 'matchStats']);
 });
