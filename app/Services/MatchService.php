@@ -20,8 +20,8 @@ class MatchService
         $visitorTopData = $visitor->musicData()->get();
 
         if ($visitorTopData->isEmpty()) {
-            $this->spotifyService->getTopArtists($visitor->spotify_token, 'medium_term');
-            $this->spotifyService->getTopTracks($visitor->spotify_token, 'medium_term');
+            $this->spotifyService->getTopArtists($visitor->spotify_token, 'long_term');
+            $this->spotifyService->getTopTracks($visitor->spotify_token, 'long_term');
 
             $visitorTopData = $visitor->musicData()->get();
         }
